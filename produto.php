@@ -50,6 +50,14 @@ include __DIR__ . '/includes/header.php';
             <?php endforeach; ?>
           </div>
         <?php endif; ?>
+        <?php if (!empty($produto['video_url'])): ?>
+          <div class="mt-3">
+            <video controls style="width:100%;max-width:600px;border-radius:8px;">
+              <source src="../<?= htmlspecialchars($produto['video_url']) ?>" type="<?= pathinfo($produto['video_url'], PATHINFO_EXTENSION) === 'mp4' ? 'video/mp4' : (pathinfo($produto['video_url'], PATHINFO_EXTENSION) === 'webm' ? 'video/webm' : 'video/ogg') ?>">
+              Seu navegador não suporta vídeos.
+            </video>
+          </div>
+        <?php endif; ?>
       </div>
     </div>
     <div class="col-lg-5">
@@ -87,7 +95,10 @@ include __DIR__ . '/includes/header.php';
         <button class="btn btn-gold w-100 mb-2" disabled aria-disabled="true">Indisponível para venda</button>
         <a href="<?= $wapp ?>" target="_blank" class="btn btn-outline-gold w-100 mb-2">Consultar reposição no WhatsApp</a>
       <?php else: ?>
-        <a href="<?= $wapp ?>" target="_blank" class="btn btn-gold w-100 mb-2">Consultar especialista</a>
+        <button type="button" class="btn btn-gold w-100 mb-2 stripe-comprar" data-produto-id="<?= $produto['id'] ?>">
+          💳 Comprar Agora
+        </button>
+        <a href="<?= $wapp ?>" target="_blank" class="btn btn-outline-gold w-100 mb-2">Consultar especialista</a>
       <?php endif; ?>
       <a href="index.php?categoria=<?= urlencode($produto['categoria']) ?>" class="btn btn-outline-gold w-100">Ver mais em <?= htmlspecialchars($produto['categoria']) ?></a>
 
@@ -111,4 +122,58 @@ include __DIR__ . '/includes/header.php';
   </div>
 </section>
 <script src="assets/js/favoritos.js"></script>
+
+<!-- Stripe JS -->
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const btnComprar = document.querySelector('.stripe-comprar');
+    if (!btnComprar) return;
+    
+    btnComprar.addEventListener('click', async function() {
+        const produtoId = this.dataset.produtoId;
+        
+        // Verifica se cliente está logado (opcional - pode redirecionar para login)
+        // Aqui fazemos a chamada direta e o backend verifica
+        
+        this.disabled = true;
+        this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processando...';
+        
+        try {
+            const formData = new FormData();
+            formData.append('produto_id', produtoId);
+            
+            const response = await fetch('stripe/checkout.php', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.success && data.url) {
+                // Redireciona para checkout do Stripe
+                window.location.href = data.url;
+            } else if (data.modo_demo) {
+                // Modo demonstração sem SDK
+                alert('MODO DEMONSTRAÇÃO\\n\\nPedido #' + data.pedido_id + ' criado!\\nProduto: ' + data.produto + '\\nValor: R$ ' + data.valor.toFixed(2) + '\\n\\nPara processar pagamentos reais, instale o SDK: composer require stripe/stripe-php');
+                window.location.href = 'stripe/success.php?pedido_id=' + data.pedido_id;
+            } else {
+                alert('Erro: ' + (data.error || 'Falha ao iniciar pagamento'));
+                // Se não autenticado, redireciona para login
+                if (response.status === 401) {
+                    window.location.href = 'cliente_login.php?redirect=produto.php?id=' + produtoId;
+                }
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            alert('Erro de conexão. Tente novamente.');
+        } finally {
+            if (!this.classList.contains('stripe-comprar')) {
+                this.disabled = false;
+                this.innerHTML = '💳 Comprar Agora';
+            }
+        }
+    });
+});
+</script>
 <?php include __DIR__ . '/includes/footer.php'; ?>

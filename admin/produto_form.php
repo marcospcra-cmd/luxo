@@ -1,11 +1,11 @@
 <?php
 /**
- * admin/produto_form.php — Criar/Editar produto + upload de imagem
+ * admin/produto_form.php — Criar/Editar produto + upload de imagem e vídeo
  */
 require_once __DIR__ . '/_auth.php';
 
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-$produto = ['id'=>0,'nome'=>'','categoria'=>'Esmeraldas','preco'=>'','descricao_curta'=>'','especificacoes_tecnicas'=>'','imagem_url'=>'','estoque'=>0];
+$produto = ['id'=>0,'nome'=>'','categoria'=>'Esmeraldas','preco'=>'','descricao_curta'=>'','especificacoes_tecnicas'=>'','imagem_url'=>'','estoque'=>0,'video_url'=>''];
 $galeria = [];
 
 if ($id) {
@@ -30,6 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $preco     = str_replace(',', '.', $_POST['preco'] ?? '0');
     $descCurta = trim($_POST['descricao_curta'] ?? '');
     $especs    = trim($_POST['especificacoes_tecnicas'] ?? '');
+    $videoDestaque = trim($_POST['video_destaque'] ?? '');
 
     // === Validação consistente do estoque ===
     // 1) precisa ser numérico (sem letras, decimais ou vazio)
@@ -48,6 +49,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($nome === '' || mb_strlen($nome) > 180)               $erros[] = 'Nome inválido.';
     if (!in_array($categoria, ['Esmeraldas','Esculturas','Cangas'], true)) $erros[] = 'Categoria inválida.';
     if (!is_numeric($preco) || (float)$preco < 0)             $erros[] = 'Preço inválido.';
+    
+    // Validação do URL do vídeo (opcional)
+    if ($videoDestaque !== '' && !filter_var($videoDestaque, FILTER_VALIDATE_URL)) {
+        $erros[] = 'URL do vídeo inválida.';
+    }
 
     /**
      * Upload da imagem principal (opcional na edição)
@@ -57,16 +63,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $up = uploadImagem($_FILES['imagem'], $erros);
         if ($up) $imagem_url = $up;
     }
+    
+    /**
+     * Upload do vídeo do produto (opcional)
+     */
+    $video_url = $produto['video_url'];
+    if (!empty($_FILES['video']['name'])) {
+        $video_url = uploadVideo($_FILES['video'], $erros);
+    }
 
     if (!$erros) {
         if ($id) {
-            $sql = 'UPDATE produtos SET nome=:n,categoria=:c,preco=:p,descricao_curta=:dc,especificacoes_tecnicas=:e,imagem_url=:img,estoque=:s WHERE id=:id';
+            $sql = 'UPDATE produtos SET nome=:n,categoria=:c,preco=:p,descricao_curta=:dc,especificacoes_tecnicas=:e,imagem_url=:img,estoque=:s,video_url=:v,video_destaque=:vd WHERE id=:id';
             $stmt = $pdo->prepare($sql);
-            $stmt->execute([':n'=>$nome,':c'=>$categoria,':p'=>$preco,':dc'=>$descCurta,':e'=>$especs,':img'=>$imagem_url,':s'=>$estoque,':id'=>$id]);
+            $stmt->execute([':n'=>$nome,':c'=>$categoria,':p'=>$preco,':dc'=>$descCurta,':e'=>$especs,':img'=>$imagem_url,':s'=>$estoque,':v'=>$video_url,':vd'=>$videoDestaque,':id'=>$id]);
         } else {
-            $sql = 'INSERT INTO produtos (nome,categoria,preco,descricao_curta,especificacoes_tecnicas,imagem_url,estoque) VALUES (:n,:c,:p,:dc,:e,:img,:s)';
+            $sql = 'INSERT INTO produtos (nome,categoria,preco,descricao_curta,especificacoes_tecnicas,imagem_url,estoque,video_url,video_destaque) VALUES (:n,:c,:p,:dc,:e,:img,:s,:v,:vd)';
             $stmt = $pdo->prepare($sql);
-            $stmt->execute([':n'=>$nome,':c'=>$categoria,':p'=>$preco,':dc'=>$descCurta,':e'=>$especs,':img'=>$imagem_url,':s'=>$estoque]);
+            $stmt->execute([':n'=>$nome,':c'=>$categoria,':p'=>$preco,':dc'=>$descCurta,':e'=>$especs,':img'=>$imagem_url,':s'=>$estoque,':v'=>$video_url,':vd'=>$videoDestaque]);
             $id = (int)$pdo->lastInsertId();
         }
 
@@ -128,6 +142,34 @@ function uploadImagem(array $file, array &$erros): ?string {
             imagedestroy($src);
         }
     }
+    move_uploaded_file($file['tmp_name'], $destino);
+    return 'uploads/'.$nomeFinal;
+}
+
+/**
+ * Faz upload validado de vídeo (MP4, WebM, Ogg - máx 50MB).
+ */
+function uploadVideo(array $file, array &$erros): ?string {
+    if ($file['error'] !== UPLOAD_ERR_OK) { $erros[]='Erro no upload do vídeo.'; return null; }
+    if ($file['size'] > 50 * 1024 * 1024) { $erros[]='Vídeo maior que 50MB.'; return null; }
+    
+    $mime = $file['type'];
+    $allowedMimes = ['video/mp4', 'video/webm', 'video/ogg'];
+    if (!in_array($mime, $allowedMimes, true)) { 
+        $erros[]='Use apenas vídeos MP4, WebM ou Ogg.'; 
+        return null; 
+    }
+    
+    // Verifica extensão pelo nome do arquivo
+    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    if (!in_array($ext, ['mp4', 'webm', 'ogg'])) {
+        $erros[]='Extensão de vídeo não permitida.';
+        return null;
+    }
+    
+    $nomeFinal = uniqid('v_', true) . '.' . $ext;
+    $destino   = __DIR__ . '/../uploads/' . $nomeFinal;
+    
     move_uploaded_file($file['tmp_name'], $destino);
     return 'uploads/'.$nomeFinal;
 }
@@ -209,6 +251,22 @@ $tema = $TEMA_ATUAL;
           <?php endforeach; ?>
         </div>
       <?php endif; ?>
+    </div>
+    
+    <div class="col-md-6">
+      <label class="form-label small text-uppercase">Vídeo do produto (MP4/WebM/Ogg - máx 50MB)</label>
+      <input class="form-control" type="file" name="video" accept="video/mp4,video/webm,video/ogg">
+      <?php if (!empty($produto['video_url'])): ?>
+        <video controls class="mt-2" style="max-width:200px;">
+          <source src="../<?= htmlspecialchars($produto['video_url']) ?>" type="<?= htmlspecialchars(pathinfo($produto['video_url'], PATHINFO_EXTENSION)) === 'mp4' ? 'video/mp4' : (pathinfo($produto['video_url'], PATHINFO_EXTENSION) === 'webm' ? 'video/webm' : 'video/ogg') ?>">
+          Seu navegador não suporta vídeos.
+        </video>
+      <?php endif; ?>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label small text-uppercase">URL do vídeo de destaque (YouTube/Vimeo - opcional)</label>
+      <input class="form-control" type="url" name="video_destaque" placeholder="https://www.youtube.com/watch?v=..." value="<?= htmlspecialchars($produto['video_destaque'] ?? '') ?>">
+      <div class="form-text">Cole a URL completa do YouTube ou Vimeo para exibir na página inicial.</div>
     </div>
 
     <div class="col-12 mt-4">

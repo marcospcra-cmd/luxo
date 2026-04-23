@@ -52,6 +52,35 @@ include __DIR__ . '/includes/header.php';
     <p class="eyebrow">Curadoria · Edição limitada</p>
     <h1>Peças raras para colecionadores exigentes.</h1>
     <p>Esmeraldas certificadas, esculturas autorais e cangas em seda pura — selecionadas uma a uma por nossos especialistas.</p>
+    
+    <?php
+    // Busca vídeo de destaque (primeiro produto com video_destaque preenchido)
+    $stmtDestaque = $pdo->query("SELECT video_destaque FROM produtos WHERE video_destaque IS NOT NULL AND video_destaque != '' LIMIT 1");
+    $videoDestaque = $stmtDestaque->fetchColumn();
+    if ($videoDestaque):
+      // Converte URL do YouTube/Vimeo para embed
+      $embedUrl = '';
+      if (strpos($videoDestaque, 'youtube.com') !== false || strpos($videoDestaque, 'youtu.be') !== false) {
+        preg_match('/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/', $videoDestaque, $matches);
+        if (!empty($matches[1])) {
+          $embedUrl = 'https://www.youtube.com/embed/' . htmlspecialchars($matches[1]);
+        }
+      } elseif (strpos($videoDestaque, 'vimeo.com') !== false) {
+        preg_match('/vimeo\.com\/(\d+)/', $videoDestaque, $matches);
+        if (!empty($matches[1])) {
+          $embedUrl = 'https://player.vimeo.com/video/' . htmlspecialchars($matches[1]);
+        }
+      }
+    ?>
+    <?php if ($embedUrl): ?>
+    <div class="video-destaque-wrap mt-4">
+      <div class="ratio ratio-16x9" style="max-width:800px;margin:0 auto;border-radius:8px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,0.3);">
+        <iframe src="<?= $embedUrl ?>" title="Vídeo em Destaque" allowfullscreen></iframe>
+      </div>
+    </div>
+    <?php endif; ?>
+    <?php endif; ?>
+    
     <a href="#colecao" class="btn btn-outline-gold mt-3">Explorar coleção</a>
   </div>
 </section>
