@@ -1,6 +1,6 @@
 <?php
 /**
- * index.php — Catálogo público
+ * index.php — Catálogo público Maison de Luxo
  * Filtros via GET:
  *   ?categoria=Esmeraldas   → filtra por categoria (server-side)
  *   ?q=esmeralda            → busca por nome (server-side, LIKE seguro via PDO)
@@ -9,6 +9,13 @@
  */
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/includes/cliente_auth.php';
+
+// Inicializa WAF se ainda não foi inicializado pelo header
+if (!isset($_SESSION['csrf_token'])) {
+    require_once __DIR__ . '/middleware/waf_security.php';
+    \MaisonDeLuxo\Middleware\waf_init();
+}
+
 $page_title = 'Coleção';
 
 // IDs favoritados pelo cliente atual (vazio se não logado)
@@ -48,7 +55,7 @@ include __DIR__ . '/includes/header.php';
 ?>
 
 <section class="hero">
-  <div class="container">
+  <div class="container hero-content">
     <p class="eyebrow">Curadoria · Edição limitada</p>
     <h1>Peças raras para colecionadores exigentes.</h1>
     <p>Esmeraldas certificadas, esculturas autorais e cangas em seda pura — selecionadas uma a uma por nossos especialistas.</p>
@@ -74,7 +81,7 @@ include __DIR__ . '/includes/header.php';
     ?>
     <?php if ($embedUrl): ?>
     <div class="video-destaque-wrap mt-4">
-      <div class="ratio ratio-16x9" style="max-width:800px;margin:0 auto;border-radius:8px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,0.3);">
+      <div class="ratio ratio-16x9" style="max-width:800px;margin:0 auto;border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-xl);">
         <iframe src="<?= $embedUrl ?>" title="Vídeo em Destaque" allowfullscreen></iframe>
       </div>
     </div>
@@ -88,7 +95,7 @@ include __DIR__ . '/includes/header.php';
 <section class="container py-5" id="colecao">
   <div class="d-flex justify-content-between align-items-end flex-wrap gap-3">
     <div>
-      <p class="eyebrow text-uppercase small mb-1" style="color:var(--accent);letter-spacing:.4em;">Catálogo</p>
+      <p class="eyebrow text-uppercase small mb-1" style="color:var(--color-gold);letter-spacing:.4em;">Catálogo</p>
       <h2 class="serif mb-0"><?= $categoria ? htmlspecialchars($categoria) : 'Todas as peças' ?></h2>
     </div>
     <span class="text-muted small" id="contadorProdutos"><?= count($produtos) ?> peça(s)</span>
@@ -133,17 +140,17 @@ include __DIR__ . '/includes/header.php';
   </div>
 
   <?php if (empty($produtos)): ?>
-    <div class="text-center py-5 text-muted">
+    <div class="text-center py-5 text-muted" style="background:var(--color-bg-card);border-radius:var(--radius-lg);border:1px solid var(--color-border-light);">
       <?= $q !== ''
           ? 'Nenhuma peça encontrada para "'.htmlspecialchars($q).'".'
           : 'Nenhuma peça disponível nesta categoria no momento.' ?>
     </div>
   <?php else: ?>
-    <div class="row g-4" id="gradeProdutos">
+    <div class="products-grid" id="gradeProdutos">
       <?php foreach ($produtos as $p):
         $semEstoque = ((int)$p['estoque']) <= 0;
       ?>
-        <div class="col-12 col-sm-6 col-lg-4 produto-item"
+        <div class="produto-item"
              data-nome="<?= htmlspecialchars(mb_strtolower($p['nome'])) ?>">
           <article class="product-card <?= $semEstoque ? 'is-soldout' : '' ?>">
             <div class="product-thumb">
@@ -165,7 +172,7 @@ include __DIR__ . '/includes/header.php';
                 <span class="product-cat"><?= htmlspecialchars($p['categoria']) ?></span>
                 <h3 class="product-name"><?= htmlspecialchars($p['nome']) ?></h3>
                 <p class="text-muted small mb-0"><?= htmlspecialchars($p['descricao_curta'] ?? '') ?></p>
-                <div class="product-price mt-2">
+                <div class="product-price">
                   <small>A partir de</small><br>
                   R$ <?= number_format((float)$p['preco'], 2, ',', '.') ?>
                 </div>
