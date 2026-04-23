@@ -2,14 +2,14 @@
 /**
  * SOLAR AMAZÔNIA - Página de Detalhe do Produto
  * Arquivo: produto.php
- * Descrição: Exibe detalhes, galeria e especificações do produto
+ * Descrição: Exibe detalhes, galeria e especificações completas com SKU e certificação
  */
 
 // 1. SEGURANÇA E CONFIGURAÇÃO (Primeiro para evitar "headers already sent")
 require_once __DIR__ . '/middleware/waf_security.php';
 require_once __DIR__ . '/config.php';
 
-// Iniciar sessão se não estiver ativa (segurança extra)
+// Iniciar sessão se não estiver ativa
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -58,9 +58,20 @@ if ($produto) {
     $preco_formatado = number_format($preco_exibicao, 2, ',', '.');
     $preco_cheio_formatado = number_format($produto['preco'], 2, ',', '.');
     
-    // Estoque
+    // Estoque e Disponibilidade
     $estoque = (int)($produto['estoque'] ?? 0);
-    $disponivel = $estoque > 0;
+    $disponivel = $estoque > 0 && ($produto['status_disponibilidade'] ?? 'disponivel') === 'disponivel';
+    
+    // Status formatado
+    $status_labels = [
+        'disponivel' => 'Disponível',
+        'reservado' => 'Reservado',
+        'em_transito' => 'Em Trânsito',
+        'vendida' => 'Vendida',
+        'conservacao' => 'Em Conservação',
+        'leilao' => 'Em Leilão'
+    ];
+    $status_label = $status_labels[$produto['status_disponibilidade'] ?? 'disponivel'] ?? 'Disponível';
 }
 
 $page_title = $produto['nome'] ?? 'Produto';
@@ -136,6 +147,13 @@ $page_title = $produto['nome'] ?? 'Produto';
             justify-content: center;
         }
 
+        .prod-sku {
+            font-size: 0.85rem;
+            color: var(--text-secondary, #666);
+            font-family: monospace;
+            margin-bottom: 5px;
+        }
+
         .prod-category {
             color: var(--gold, #d4af37);
             text-transform: uppercase;
@@ -204,6 +222,20 @@ $page_title = $produto['nome'] ?? 'Produto';
 
         .spec-label { color: var(--text-secondary, #666); }
         .spec-val { font-weight: 600; color: var(--text-primary, #333); text-align: right; }
+
+        /* Badge de Edição */
+        .edition-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: var(--gold, #d4af37);
+            color: #fff;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
 
         /* Ações */
         .action-area {
@@ -313,6 +345,18 @@ $page_title = $produto['nome'] ?? 'Produto';
 
             <!-- Coluna Direita: Dados -->
             <div class="product-info-content">
+                <!-- Badge de Tipo de Edição -->
+                <?php 
+                $tipo_edicao = $produto['tipo_edicao'] ?? 'unica';
+                $badge_text = $tipo_edicao === 'unica' ? 'Peça Única' : ($tipo_edicao === 'limitada' ? "Edição Limitada ({$produto['numero_edicao']}/{$produto['total_edicoes']})" : 'Coleção Aberta');
+                ?>
+                <span class="edition-badge"><?php echo htmlspecialchars($badge_text); ?></span>
+                
+                <!-- SKU -->
+                <?php if (!empty($produto['sku'])): ?>
+                <div class="prod-sku">SKU: <?php echo htmlspecialchars($produto['sku']); ?></div>
+                <?php endif; ?>
+                
                 <span class="prod-category"><?php echo htmlspecialchars($produto['categoria'] ?? 'Obra de Arte'); ?></span>
                 <h1 class="prod-title"><?php echo htmlspecialchars($produto['nome']); ?></h1>
                 
@@ -323,27 +367,45 @@ $page_title = $produto['nome'] ?? 'Produto';
                     <?php endif; ?>
                 </div>
 
-                <!-- Especificações (Novos Campos) -->
+                <!-- Especificações Completas -->
                 <div class="specs-panel">
-                    <div class="specs-title"><i class="fas fa-ruler-combined"></i> Especificações da Obra</div>
+                    <div class="specs-title"><i class="fas fa-certificate"></i> Identificação e Autenticidade</div>
                     
-                    <?php if (!empty($produto['codigo_peca'])): ?>
+                    <?php if (!empty($produto['certificado_id'])): ?>
                     <div class="spec-row">
-                        <span class="spec-label">Código da Peça:</span>
-                        <span class="spec-val"><?php echo htmlspecialchars($produto['codigo_peca']); ?></span>
+                        <span class="spec-label">Certificado nº:</span>
+                        <span class="spec-val"><?php echo htmlspecialchars($produto['certificado_id']); ?></span>
                     </div>
                     <?php endif; ?>
 
+                    <?php if (!empty($produto['codigo_rastreio_interno'])): ?>
+                    <div class="spec-row">
+                        <span class="spec-label">Código Interno:</span>
+                        <span class="spec-val"><?php echo htmlspecialchars($produto['codigo_rastreio_interno']); ?></span>
+                    </div>
+                    <?php endif; ?>
+
+                    <div class="spec-row">
+                        <span class="spec-label">Status:</span>
+                        <span class="spec-val" style="color: <?php echo $disponivel ? 'green' : 'red'; ?>">
+                            <?php echo $status_label; ?>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="specs-panel">
+                    <div class="specs-title"><i class="fas fa-ruler-combined"></i> Especificações Físicas</div>
+                    
                     <?php if (!empty($produto['material'])): ?>
                     <div class="spec-row">
-                        <span class="spec-label">Esculpida em:</span>
+                        <span class="spec-label">Material:</span>
                         <span class="spec-val"><?php echo htmlspecialchars($produto['material']); ?></span>
                     </div>
                     <?php endif; ?>
 
                     <?php if (!empty($produto['peso'])): ?>
                     <div class="spec-row">
-                        <span class="spec-label">Peso Aprox.:</span>
+                        <span class="spec-label">Peso:</span>
                         <span class="spec-val"><?php echo htmlspecialchars($produto['peso']); ?></span>
                     </div>
                     <?php endif; ?>
@@ -354,18 +416,18 @@ $page_title = $produto['nome'] ?? 'Produto';
                         <span class="spec-val"><?php echo htmlspecialchars($produto['dimensoes']); ?></span>
                     </div>
                     <?php endif; ?>
-                    
-                    <div class="spec-row">
-                        <span class="spec-label">Disponibilidade:</span>
-                        <span class="spec-val" style="color: <?php echo $disponivel ? 'green' : 'red'; ?>">
-                            <?php echo $disponivel ? "$estoque unidades" : "Esgotado"; ?>
-                        </span>
-                    </div>
                 </div>
 
                 <p class="desc-text">
                     <?php echo nl2br(htmlspecialchars($produto['descricao_completa'] ?? $produto['descricao_curta'] ?? 'Sem descrição disponível.')); ?>
                 </p>
+
+                <?php if (!empty($produto['historia_obra'])): ?>
+                <div style="margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.03); border-left: 3px solid var(--gold, #d4af37); border-radius: 0 8px 8px 0;">
+                    <strong style="color: var(--gold, #d4af37);"><i class="fas fa-book-open"></i> História da Obra:</strong>
+                    <p style="margin-top: 10px; font-style: italic;"><?php echo nl2br(htmlspecialchars($produto['historia_obra'])); ?></p>
+                </div>
+                <?php endif; ?>
 
                 <form action="api/carrinho_action.php" method="POST" class="action-area">
                     <input type="hidden" name="acao" value="add">
@@ -379,9 +441,9 @@ $page_title = $produto['nome'] ?? 'Produto';
                 </form>
                 
                 <div style="margin-top: 20px; font-size: 0.85rem; color: var(--text-secondary, #666); display: flex; gap: 15px; flex-wrap: wrap;">
-                    <span><i class="fas fa-truck" style="color: var(--gold, #d4af37);"></i> Frete Internacional</span>
-                    <span><i class="fas fa-shield-alt" style="color: var(--gold, #d4af37);"></i> Certificado de Autenticidade</span>
-                    <span><i class="fab fa-whatsapp" style="color: var(--gold, #d4af37);"></i> Suporte Dedicado</span>
+                    <span><i class="fas fa-truck" style="color: var(--gold, #d4af37);"></i> Frete Internacional Segurado</span>
+                    <span><i class="fas fa-file-contract" style="color: var(--gold, #d4af37);"></i> Certificado Incluso</span>
+                    <span><i class="fab fa-whatsapp" style="color: var(--gold, #d4af37);"></i> Curadoria Especializada</span>
                 </div>
             </div>
         </div>
@@ -396,7 +458,6 @@ $page_title = $produto['nome'] ?? 'Produto';
         const mainBox = document.getElementById('mainMediaBox');
         const src = el.src;
         
-        // Atualiza active
         document.querySelectorAll('.thumb-item').forEach(t => t.classList.remove('active'));
         el.classList.add('active');
 
@@ -410,22 +471,6 @@ $page_title = $produto['nome'] ?? 'Produto';
 
 </body>
 </html>
-          </div>
-        <?php endif; ?>
-        <?php if (!empty($produto['video_url'])): ?>
-          <div class="mt-3">
-            <video controls style="width:100%;max-width:100%;height:auto;border-radius:8px;">
-              <source src="../<?= htmlspecialchars($produto['video_url']) ?>" type="<?= pathinfo($produto['video_url'], PATHINFO_EXTENSION) === 'mp4' ? 'video/mp4' : (pathinfo($produto['video_url'], PATHINFO_EXTENSION) === 'webm' ? 'video/webm' : 'video/ogg') ?>">
-              Seu navegador não suporta vídeos.
-            </video>
-          </div>
-        <?php endif; ?>
-      </div>
-    </div>
-    <div class="col-lg-5">
-      <p class="product-cat mb-2"><?= htmlspecialchars($produto['categoria']) ?></p>
-      <h1 class="serif"><?= htmlspecialchars($produto['nome']) ?></h1>
-      <p class="text-muted"><?= htmlspecialchars($produto['descricao_curta'] ?? '') ?></p>
 
       <div class="my-4">
         <div class="text-muted small">Valor</div>
