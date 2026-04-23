@@ -19,7 +19,7 @@ $totalPedidos = (int)$stmt->fetchColumn();
 $stmt = $pdo->query('SELECT COUNT(*) FROM clientes');
 $totalClientes = (int)$stmt->fetchColumn();
 
-$stmt = $pdo->query('SELECT SUM(valor_total) FROM pedidos WHERE status != "cancelado"');
+$stmt = $pdo->query('SELECT SUM(total) FROM pedidos WHERE status != "cancelado"');
 $receitaTotal = (float)($stmt->fetchColumn() ?? 0);
 
 $stmt = $pdo->query('SELECT COUNT(*) FROM produtos WHERE estoque <= 3');
