@@ -43,7 +43,10 @@ $tema = $TEMA_ATUAL;
       <p class="eyebrow small text-uppercase mb-1" style="color:var(--accent);letter-spacing:.4em;">Gestão</p>
       <h2 class="serif mb-0">Produtos</h2>
     </div>
-    <a href="produto_form.php" class="btn btn-gold">+ Novo produto</a>
+    <div class="d-flex gap-2">
+      <a href="pedidos.php" class="btn btn-outline-info">📦 Pedidos</a>
+      <a href="produto_form.php" class="btn btn-gold">+ Novo produto</a>
+    </div>
   </div>
 
   <?php if ($msg): ?>
@@ -54,7 +57,7 @@ $tema = $TEMA_ATUAL;
     <table class="table admin-table align-middle">
       <thead>
         <tr>
-          <th>Foto</th><th>Nome</th><th>Categoria</th><th>Preço</th><th>Estoque</th><th class="text-end">Ações</th>
+          <th>Foto</th><th>Nome</th><th>Categoria</th><th>Preço</th><th>Estoque</th><th>Vídeo</th><th class="text-end">Ações</th>
         </tr>
       </thead>
       <tbody>
@@ -74,6 +77,14 @@ $tema = $TEMA_ATUAL;
               <span class="badge bg-success"><?= $est ?></span>
             <?php endif; ?>
           </td>
+          <td>
+            <?php if (!empty($p['video_url'])): ?>
+              <span class="badge bg-info">✓ Vídeo</span>
+            <?php endif; ?>
+            <?php if (!empty($p['video_destaque'])): ?>
+              <span class="badge bg-primary">Destaque</span>
+            <?php endif; ?>
+          </td>
           <td class="text-end">
             <a href="produto_form.php?id=<?= (int)$p['id'] ?>" class="btn btn-sm btn-outline-gold">Editar</a>
             <form method="post" action="produto_excluir.php" class="d-inline" onsubmit="return confirm('Excluir esta peça?');">
@@ -85,7 +96,7 @@ $tema = $TEMA_ATUAL;
         </tr>
         <?php endforeach; ?>
         <?php if (empty($produtos)): ?>
-          <tr><td colspan="6" class="text-center text-muted py-4">Nenhum produto cadastrado.</td></tr>
+          <tr><td colspan="7" class="text-center text-muted py-4">Nenhum produto cadastrado.</td></tr>
         <?php endif; ?>
       </tbody>
     </table>

@@ -52,3 +52,9 @@ if (isset($_GET['tema']) && in_array($_GET['tema'], ['dark','light'], true)) {
     $_COOKIE['tema'] = $_GET['tema'];
 }
 $TEMA_ATUAL = $_COOKIE['tema'] ?? TEMA_PADRAO;
+
+// === Configurações do Stripe ===
+define('STRIPE_SECRET_KEY', 'sk_test_YOUR_SECRET_KEY'); // Troque pela sua chave secreta
+define('STRIPE_PUBLISHABLE_KEY', 'pk_test_YOUR_PUBLISHABLE_KEY'); // Troque pela sua chave publicável
+define('STRIPE_WEBHOOK_SECRET', 'whsec_YOUR_WEBHOOK_SECRET'); // Troque pelo segredo do webhook
+define('SITE_URL', 'https://seusite.com'); // URL base do seu site
