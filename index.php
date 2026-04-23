@@ -1,6 +1,6 @@
 <?php
 /**
- * index.php — Catálogo público Maison de Luxo
+ * index.php — Catálogo público Solar Amazônia
  * Filtros via GET:
  *   ?categoria=Esmeraldas   → filtra por categoria (server-side)
  *   ?q=esmeralda            → busca por nome (server-side, LIKE seguro via PDO)
@@ -57,7 +57,7 @@ include __DIR__ . '/includes/header.php';
 <section class="hero">
   <div class="container hero-content">
     <p class="eyebrow">Curadoria · Edição limitada</p>
-    <h1>Peças raras para colecionadores exigentes.</h1>
+    <h1>Tesouros raros da Amazônia para colecionadores exigentes.</h1>
     <p>Esmeraldas certificadas, esculturas autorais e cangas em seda pura — selecionadas uma a uma por nossos especialistas.</p>
     
     <?php

@@ -1,10 +1,16 @@
+```
 # Compiled and build artifacts
 *.pyc
 __pycache__/
+*.o
+*.obj
+dist/
+build/
 
 # Dependencies
-vendor/
-composer.lock
+.venv/
+venv/
+node_modules/
 
 # Logs and temp files
 *.log
@@ -20,11 +26,7 @@ composer.lock
 .vscode/
 .idea/
 
-# OS specific
+# OS generated files
 .DS_Store
 Thumbs.db
-
-# Backup files
-*~
-*.bak
-*.backup
+```

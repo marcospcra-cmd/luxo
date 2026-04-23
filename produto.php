@@ -52,7 +52,7 @@ include __DIR__ . '/includes/header.php';
         <?php endif; ?>
         <?php if (!empty($produto['video_url'])): ?>
           <div class="mt-3">
-            <video controls style="width:100%;max-width:600px;border-radius:8px;">
+            <video controls style="width:100%;max-width:100%;height:auto;border-radius:8px;">
               <source src="../<?= htmlspecialchars($produto['video_url']) ?>" type="<?= pathinfo($produto['video_url'], PATHINFO_EXTENSION) === 'mp4' ? 'video/mp4' : (pathinfo($produto['video_url'], PATHINFO_EXTENSION) === 'webm' ? 'video/webm' : 'video/ogg') ?>">
               Seu navegador não suporta vídeos.
             </video>

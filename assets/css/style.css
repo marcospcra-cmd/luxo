@@ -1,12 +1,13 @@
 /* 
- * Maison de Luxo - Dark Luxury Design System
- * Tema sofisticado com fundo preto/cinza chumbo, detalhes em Dourado #d4af37
+ * Solar Amazônia - Dark & Light Luxury Design System
+ * Tema sofisticado com modo escuro (padrão) e modo claro
+ * Fundo preto/cinza chumbo ou branco/off-white, detalhes em Dourado #d4af37
  * Tipografia elegante, efeitos de vidro (glassmorphism) e animações suaves
- * CSS Moderno com Variáveis CSS, Flexbox/Grid
+ * CSS Moderno com Variáveis CSS, Flexbox/Grid, Totalmente Responsivo
  */
 
 :root {
-    /* Cores Principais - Dark Luxury */
+    /* Cores Principais - Dark Luxury (Padrão) */
     --color-bg-primary: #0a0a0a;
     --color-bg-secondary: #121212;
     --color-bg-tertiary: #1a1a1a;
@@ -18,23 +19,23 @@
     --color-gold-dark: #b8941f;
     --color-gold-gradient: linear-gradient(135deg, #d4af37 0%, #f0d76a 50%, #b8941f 100%);
     
-    /* Texto */
+    /* Texto - Dark */
     --color-text-primary: #f5f5f5;
     --color-text-secondary: #b0b0b0;
     --color-text-muted: #6b6b6b;
     
-    /* Superfícies e Bordas */
+    /* Superfícies e Bordas - Dark */
     --color-border: rgba(212, 175, 55, 0.2);
     --color-border-light: rgba(255, 255, 255, 0.08);
     --color-surface: rgba(30, 30, 30, 0.6);
     
-    /* Glassmorphism */
+    /* Glassmorphism - Dark */
     --glass-bg: rgba(20, 20, 20, 0.7);
     --glass-border: rgba(212, 175, 55, 0.15);
     --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     --backdrop-blur: blur(12px);
     
-    /* Sombras */
+    /* Sombras - Dark */
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
     --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
@@ -55,6 +56,39 @@
     /* Tipografia */
     --font-heading: 'Cormorant Garamond', Georgia, serif;
     --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ============================================
+   TEMA CLARO (Light Mode)
+   ============================================ */
+[data-bs-theme="light"], body.theme-light {
+    /* Cores Principais - Light Luxury */
+    --color-bg-primary: #fafafa;
+    --color-bg-secondary: #ffffff;
+    --color-bg-tertiary: #f5f5f5;
+    --color-bg-card: rgba(255, 255, 255, 0.9);
+    
+    /* Texto - Light */
+    --color-text-primary: #1a1a1a;
+    --color-text-secondary: #4a4a4a;
+    --color-text-muted: #8a8a8a;
+    
+    /* Superfícies e Bordas - Light */
+    --color-border: rgba(212, 175, 55, 0.3);
+    --color-border-light: rgba(0, 0, 0, 0.08);
+    --color-surface: rgba(245, 245, 245, 0.8);
+    
+    /* Glassmorphism - Light */
+    --glass-bg: rgba(255, 255, 255, 0.85);
+    --glass-border: rgba(212, 175, 55, 0.2);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    
+    /* Sombras - Light */
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+    --shadow-xl: 0 16px 64px rgba(0, 0, 0, 0.15);
+    --shadow-gold: 0 4px 20px rgba(212, 175, 55, 0.25);
 }
 
 /* Reset e Base */
@@ -816,6 +850,10 @@ a:hover {
         grid-template-columns: repeat(2, 1fr);
         gap: 1.5rem;
     }
+    
+    .product-thumb {
+        aspect-ratio: 1/1;
+    }
 }
 
 @media (max-width: 768px) {
@@ -842,6 +880,134 @@ a:hover {
         padding: 1rem;
         border-radius: var(--radius-md);
         margin-top: 1rem;
+    }
+    
+    /* Imagens e vídeos responsivos em mobile */
+    .product-thumb img,
+    .detail-gallery img,
+    .detail-gallery video,
+    .ratio iframe {
+        max-width: 100%;
+        height: auto;
+    }
+    
+    .col-lg-7,
+    .col-lg-5,
+    .col-md-8,
+    .col-md-4 {
+        max-width: 100%;
+        flex: 0 0 100%;
+    }
+}
+
+@media (max-width: 576px) {
+    html {
+        font-size: 14px;
+    }
+    
+    .container {
+        padding: 0 1rem;
+    }
+    
+    .product-card {
+        border-radius: var(--radius-md);
+    }
+    
+    .product-thumb {
+        aspect-ratio: 1/1;
+    }
+    
+    .btn {
+        padding: 0.6rem 1rem;
+        font-size: 0.85rem;
+    }
+}
+
+/* ============================================
+   IMAGENS E VÍDEOS RESPONSIVOS
+   ============================================ */
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+.product-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.detail-gallery img {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-md);
+    display: block;
+}
+
+.detail-gallery video {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-md);
+    display: block;
+}
+
+/* Galeria de thumbnails responsiva */
+.thumb-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.thumb-row img {
+    width: 100%;
+    aspect-ratio: 1/1;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: transform var(--transition-fast), border-color var(--transition-fast);
+    border: 2px solid transparent;
+}
+
+.thumb-row img:hover {
+    transform: scale(1.05);
+    border-color: var(--color-gold);
+}
+
+/* Ratio responsivo para vídeos embed */
+.ratio {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+}
+
+.ratio::before {
+    display: block;
+    content: '';
+    padding-top: var(--bs-aspect-ratio, 56.25%);
+}
+
+.ratio iframe,
+.ratio video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: var(--radius-md);
+}
+
+/* Ajuste para página de produto */
+@media (max-width: 992px) {
+    .detail-gallery {
+        margin-bottom: 2rem;
+    }
+    
+    .thumb-row {
+        grid-template-columns: repeat(4, 1fr);
     }
 }
 

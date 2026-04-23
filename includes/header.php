@@ -34,18 +34,18 @@ if (isset($_SESSION['carrinho']) && is_array($_SESSION['carrinho'])) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title><?= isset($page_title) ? htmlspecialchars($page_title) . ' | ' : '' ?>Maison de Luxo</title>
-<meta name="description" content="Curadoria exclusiva de esmeraldas, esculturas e cangas de alto padrão.">
+<title><?= isset($page_title) ? htmlspecialchars($page_title) . ' | ' : '' ?>Solar Amazônia</title>
+<meta name="description" content="Curadoria exclusiva de esmeraldas, esculturas e cangas da Amazônia. Peças únicas e sofisticadas.">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <link href="assets/css/style.css" rel="stylesheet">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💎</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>☀️</text></svg>">
 </head>
 <body class="theme-<?= $tema ?>">
 <nav class="navbar navbar-expand-lg site-nav sticky-top">
   <div class="container">
     <a class="navbar-brand brand" href="index.php">
-      <span class="brand-mark">M</span><span class="brand-word">Maison<em>de Luxo</em></span>
+      <span class="brand-mark">S</span><span class="brand-word">Solar<em>Amazônia</em></span>
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
       <span class="navbar-toggler-icon"></span>
