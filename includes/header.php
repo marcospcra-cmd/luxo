@@ -1,14 +1,32 @@
 <?php
+/**
+ * includes/header.php
+ * Header integrado com WAF, sessão segura e carrinho com contador dinâmico
+ */
+
+// Inicializa WAF Security (deve ser o primeiro include)
+require_once __DIR__ . '/../middleware/waf_security.php';
+\MaisonDeLuxo\Middleware\waf_init();
+
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/cliente_auth.php';
+
 $tema = $TEMA_ATUAL;
 
-// Conta favoritos do cliente logado para mostrar no header
+// Conta favoritos do cliente logado
 $favTotalHeader = 0;
 if (cliente_logado()) {
     $s = $pdo->prepare('SELECT COUNT(*) FROM favoritos WHERE cliente_id = :c');
     $s->execute([':c' => cliente_id()]);
     $favTotalHeader = (int)$s->fetchColumn();
+}
+
+// Calcula total de itens no carrinho
+$cartItemCount = 0;
+if (isset($_SESSION['carrinho']) && is_array($_SESSION['carrinho'])) {
+    foreach ($_SESSION['carrinho'] as $qty) {
+        $cartItemCount += (int)$qty;
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -40,6 +58,12 @@ if (cliente_logado()) {
         <li class="nav-item"><a class="nav-link" href="index.php?categoria=Cangas">Cangas</a></li>
       </ul>
       <div class="d-flex align-items-center gap-3 flex-wrap">
+        <!-- Ícone do Carrinho com Contador Dinâmico -->
+        <a class="nav-link position-relative" href="carrinho.php" title="Seu carrinho" aria-label="Carrinho">
+          🛒 <span class="d-none d-lg-inline">Carrinho</span>
+          <span id="cartCountBadge" class="fav-count" style="<?= $cartItemCount > 0 ? '' : 'display:none;' ?>"><?= $cartItemCount ?></span>
+        </a>
+        
         <a class="nav-link fav-link position-relative" href="favoritos.php" title="Meus favoritos" aria-label="Meus favoritos">
           ♥ <span class="d-none d-lg-inline">Favoritos</span>
           <span id="favCountBadge" class="fav-count" style="<?= $favTotalHeader>0?'':'display:none;' ?>"><?= $favTotalHeader ?></span>
@@ -72,6 +96,8 @@ if (cliente_logado()) {
 <main class="site-main">
 
 <script>
-window.CSRF_CLIENTE = <?= json_encode($_SESSION['csrf_cliente'] ?? '') ?>;
+window.CSRF_CLIENTE = <?= json_encode(\MaisonDeLuxo\Middleware\WAFSecurity::getCSRFToken()) ?>;
 window.PRECISA_LOGIN = <?= cliente_logado() ? 'false' : 'true' ?>;
+window.CART_ITEM_COUNT = <?= $cartItemCount ?>;
 </script>
+
