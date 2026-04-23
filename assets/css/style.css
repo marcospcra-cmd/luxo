@@ -968,13 +968,50 @@ img {
     object-fit: cover;
     border-radius: var(--radius-sm);
     cursor: pointer;
-    transition: transform var(--transition-fast), border-color var(--transition-fast);
+    transition: transform var(--transition-fast), border-color var(--transition-fast), opacity var(--transition-fast);
     border: 2px solid transparent;
+    background: var(--color-bg-secondary);
 }
 
 .thumb-row img:hover {
     transform: scale(1.05);
     border-color: var(--color-gold);
+}
+
+.thumb-row img.thumb-active,
+.thumb-row img.active {
+    border-color: var(--color-gold);
+    opacity: 1;
+}
+
+/* Thumbnail do vídeo */
+.video-thumb {
+    background: var(--color-bg-tertiary) !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--color-gold);
+}
+
+.video-thumb:hover {
+    background: var(--color-gold) !important;
+}
+
+/* Container de vídeo na galeria */
+.video-container {
+    background: var(--color-bg-secondary);
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border-light);
+}
+
+.gallery-video {
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-sm);
+    background: #000;
+    max-height: 500px;
+    object-fit: contain;
 }
 
 /* Ratio responsivo para vídeos embed */

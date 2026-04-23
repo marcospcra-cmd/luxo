@@ -5,8 +5,22 @@
 require_once __DIR__ . '/_auth.php';
 
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-$produto = ['id'=>0,'nome'=>'','categoria'=>'Esmeraldas','preco'=>'','descricao_curta'=>'','especificacoes_tecnicas'=>'','imagem_url'=>'','estoque'=>0,'video_url'=>''];
+$produto = ['id'=>0,'nome'=>'','categoria'=>'Esmeraldas','preco'=>'','descricao_curta'=>'','especificacoes_tecnicas'=>'','imagem_url'=>'','estoque'=>0,'video_url'=>'','codigo_registro'=>''];
 $galeria = [];
+$categorias = [];
+
+// Carrega categorias do banco
+try {
+    $stmtCat = $pdo->query('SELECT id, nome, slug FROM categorias WHERE ativo = 1 ORDER BY ordem, nome');
+    $categorias = $stmtCat->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+    // Fallback para categorias fixas se tabela não existir
+    $categorias = [
+        ['id' => 1, 'nome' => 'Esmeraldas', 'slug' => 'esmeraldas'],
+        ['id' => 2, 'nome' => 'Esculturas', 'slug' => 'esculturas'],
+        ['id' => 3, 'nome' => 'Cangas', 'slug' => 'cangas']
+    ];
+}
 
 if ($id) {
     $s = $pdo->prepare('SELECT * FROM produtos WHERE id=:id');
@@ -31,6 +45,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $descCurta = trim($_POST['descricao_curta'] ?? '');
     $especs    = trim($_POST['especificacoes_tecnicas'] ?? '');
     $videoDestaque = trim($_POST['video_destaque'] ?? '');
+    $codigoRegistro = trim($_POST['codigo_registro'] ?? '');
+
+    // Validação do código de registro (obrigatório e único)
+    if ($codigoRegistro === '') {
+        $erros[] = 'Código de registro é obrigatório.';
+    } else {
+        // Verifica se já existe outro produto com este código
+        $checkSql = 'SELECT id FROM produtos WHERE codigo_registro = :cr';
+        $checkParams = [':cr' => $codigoRegistro];
+        if ($id) {
+            $checkSql .= ' AND id != :id';
+            $checkParams[':id'] = $id;
+        }
+        $checkStmt = $pdo->prepare($checkSql);
+        $checkStmt->execute($checkParams);
+        if ($checkStmt->fetch()) {
+            $erros[] = 'Código de registro já está em uso por outro produto.';
+        }
+    }
 
     // === Validação consistente do estoque ===
     // 1) precisa ser numérico (sem letras, decimais ou vazio)
@@ -47,7 +80,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($nome === '' || mb_strlen($nome) > 180)               $erros[] = 'Nome inválido.';
-    if (!in_array($categoria, ['Esmeraldas','Esculturas','Cangas'], true)) $erros[] = 'Categoria inválida.';
+    
+    // Valida categoria contra lista dinâmica
+    $categoriaValida = false;
+    foreach ($categorias as $cat) {
+        if ($cat['nome'] === $categoria) {
+            $categoriaValida = true;
+            break;
+        }
+    }
+    if (!$categoriaValida) $erros[] = 'Categoria inválida.';
+    
     if (!is_numeric($preco) || (float)$preco < 0)             $erros[] = 'Preço inválido.';
     
     // Validação do URL do vídeo (opcional)
@@ -74,13 +117,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!$erros) {
         if ($id) {
-            $sql = 'UPDATE produtos SET nome=:n,categoria=:c,preco=:p,descricao_curta=:dc,especificacoes_tecnicas=:e,imagem_url=:img,estoque=:s,video_url=:v,video_destaque=:vd WHERE id=:id';
+            $sql = 'UPDATE produtos SET nome=:n,categoria=:c,preco=:p,descricao_curta=:dc,especificacoes_tecnicas=:e,imagem_url=:img,estoque=:s,video_url=:v,video_destaque=:vd,codigo_registro=:cr WHERE id=:id';
             $stmt = $pdo->prepare($sql);
-            $stmt->execute([':n'=>$nome,':c'=>$categoria,':p'=>$preco,':dc'=>$descCurta,':e'=>$especs,':img'=>$imagem_url,':s'=>$estoque,':v'=>$video_url,':vd'=>$videoDestaque,':id'=>$id]);
+            $stmt->execute([':n'=>$nome,':c'=>$categoria,':p'=>$preco,':dc'=>$descCurta,':e'=>$especs,':img'=>$imagem_url,':s'=>$estoque,':v'=>$video_url,':vd'=>$videoDestaque,':cr'=>$codigoRegistro,':id'=>$id]);
         } else {
-            $sql = 'INSERT INTO produtos (nome,categoria,preco,descricao_curta,especificacoes_tecnicas,imagem_url,estoque,video_url,video_destaque) VALUES (:n,:c,:p,:dc,:e,:img,:s,:v,:vd)';
+            $sql = 'INSERT INTO produtos (nome,categoria,preco,descricao_curta,especificacoes_tecnicas,imagem_url,estoque,video_url,video_destaque,codigo_registro) VALUES (:n,:c,:p,:dc,:e,:img,:s,:v,:vd,:cr)';
             $stmt = $pdo->prepare($sql);
-            $stmt->execute([':n'=>$nome,':c'=>$categoria,':p'=>$preco,':dc'=>$descCurta,':e'=>$especs,':img'=>$imagem_url,':s'=>$estoque,':v'=>$video_url,':vd'=>$videoDestaque]);
+            $stmt->execute([':n'=>$nome,':c'=>$categoria,':p'=>$preco,':dc'=>$descCurta,':e'=>$especs,':img'=>$imagem_url,':s'=>$estoque,':v'=>$video_url,':vd'=>$videoDestaque,':cr'=>$codigoRegistro]);
             $id = (int)$pdo->lastInsertId();
         }
 
@@ -202,17 +245,22 @@ $tema = $TEMA_ATUAL;
   <form method="post" enctype="multipart/form-data" class="row g-3">
     <input type="hidden" name="csrf" value="<?= htmlspecialchars($_SESSION['csrf']) ?>">
 
+    <div class="col-md-6">
+      <label class="form-label small text-uppercase">Código de Registro</label>
+      <input class="form-control" name="codigo_registro" maxlength="50" required value="<?= htmlspecialchars($produto['codigo_registro'] ?? '') ?>" placeholder="EX: ESM-2024-001">
+      <div class="form-text">Código único para identificar esta peça. Ex: ESM-2024-001, ESC-BR-042, CGA-SD-108</div>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label small text-uppercase">Categoria</label>
+      <select class="form-select" name="categoria" required>
+        <?php foreach ($categorias as $cat): ?>
+          <option value="<?= htmlspecialchars($cat['nome']) ?>" <?= ($produto['categoria'] ?? '') === $cat['nome'] ? 'selected' : '' ?>><?= htmlspecialchars($cat['nome']) ?></option>
+        <?php endforeach; ?>
+      </select>
+    </div>
     <div class="col-md-8">
       <label class="form-label small text-uppercase">Nome</label>
       <input class="form-control" name="nome" maxlength="180" required value="<?= htmlspecialchars($produto['nome']) ?>">
-    </div>
-    <div class="col-md-4">
-      <label class="form-label small text-uppercase">Categoria</label>
-      <select class="form-select" name="categoria" required>
-        <?php foreach (['Esmeraldas','Esculturas','Cangas'] as $c): ?>
-          <option <?= $produto['categoria']===$c?'selected':'' ?>><?= $c ?></option>
-        <?php endforeach; ?>
-      </select>
     </div>
     <div class="col-md-4">
       <label class="form-label small text-uppercase">Preço (R$)</label>

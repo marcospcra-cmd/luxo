@@ -41,18 +41,29 @@ include __DIR__ . '/includes/header.php';
   <div class="row g-5 mt-1">
     <div class="col-lg-7">
       <div class="detail-gallery">
+        <!-- Imagem principal -->
         <img id="mainImg" src="<?= htmlspecialchars($produto['imagem_url'] ?: 'assets/placeholder.svg') ?>" alt="<?= htmlspecialchars($produto['nome']) ?>" onerror="this.src='assets/placeholder.svg'">
-        <?php if (!empty($galeria)): ?>
-          <div class="thumb-row">
-            <img src="<?= htmlspecialchars($produto['imagem_url']) ?>" onclick="document.getElementById('mainImg').src=this.src">
+        
+        <!-- Thumbnails das imagens -->
+        <?php if (!empty($galeria) || !empty($produto['video_url'])): ?>
+          <div class="thumb-row mt-3">
+            <img src="<?= htmlspecialchars($produto['imagem_url']) ?>" onclick="setMainImage(this)" class="thumb-active" alt="Imagem principal">
             <?php foreach ($galeria as $img): ?>
-              <img src="<?= htmlspecialchars($img) ?>" onclick="document.getElementById('mainImg').src=this.src">
+              <img src="<?= htmlspecialchars($img) ?>" onclick="setMainImage(this)" alt="Galeria">
             <?php endforeach; ?>
+            <?php if (!empty($produto['video_url'])): ?>
+              <!-- Thumbnail do vídeo -->
+              <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%231a1a1a' width='100' height='100'/%3E%3Cpolygon fill='%23d4af37' points='40,30 70,50 40,70'/%3E%3C/svg%3E" 
+                   onclick="scrollToVideo()" 
+                   alt="Ver vídeo" class="video-thumb">
+            <?php endif; ?>
           </div>
         <?php endif; ?>
+        
+        <!-- Vídeo integrado à galeria -->
         <?php if (!empty($produto['video_url'])): ?>
-          <div class="mt-3">
-            <video controls style="width:100%;max-width:100%;height:auto;border-radius:8px;">
+          <div class="video-container mt-3" id="videoSection">
+            <video controls class="gallery-video" id="productVideo">
               <source src="../<?= htmlspecialchars($produto['video_url']) ?>" type="<?= pathinfo($produto['video_url'], PATHINFO_EXTENSION) === 'mp4' ? 'video/mp4' : (pathinfo($produto['video_url'], PATHINFO_EXTENSION) === 'webm' ? 'video/webm' : 'video/ogg') ?>">
               Seu navegador não suporta vídeos.
             </video>
@@ -60,6 +71,32 @@ include __DIR__ . '/includes/header.php';
         <?php endif; ?>
       </div>
     </div>
+
+    <script>
+    function setMainImage(thumb) {
+        // Remove classe active de todos os thumbnails
+        document.querySelectorAll('.thumb-row img').forEach(img => {
+            img.classList.remove('thumb-active');
+        });
+        // Adiciona classe active ao thumbnail clicado
+        thumb.classList.add('thumb-active');
+        // Atualiza imagem principal
+        document.getElementById('mainImg').src = thumb.src;
+    }
+    
+    function scrollToVideo() {
+        const videoSection = document.getElementById('videoSection');
+        if (videoSection) {
+            videoSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            const video = document.getElementById('productVideo');
+            if (video) {
+                video.play();
+            }
+        }
+    }
+    </script>
+    
+    <!-- Coluna de Informações do Produto -->
     <div class="col-lg-5">
       <p class="product-cat mb-2"><?= htmlspecialchars($produto['categoria']) ?></p>
       <h1 class="serif"><?= htmlspecialchars($produto['nome']) ?></h1>
@@ -82,6 +119,14 @@ include __DIR__ . '/includes/header.php';
       <?php
         $isFav = in_array((int)$produto['id'], favoritos_ids($pdo), true);
       ?>
+      
+      <!-- Botão Adicionar ao Carrinho -->
+      <?php if (!$indisponivel): ?>
+      <button type="button" class="btn btn-outline-gold w-100 mb-2" onclick="addToCart(<?= $produto['id'] ?>)">
+        🛒 Adicionar ao Carrinho
+      </button>
+      <?php endif; ?>
+      
       <button type="button"
               class="btn btn-fav-detail w-100 mb-2 fav-btn <?= $isFav ? 'is-on' : '' ?>"
               data-id="<?= (int)$produto['id'] ?>"
@@ -126,15 +171,69 @@ include __DIR__ . '/includes/header.php';
 <!-- Stripe JS -->
 <script src="https://js.stripe.com/v3/"></script>
 <script>
+/**
+ * Adiciona produto ao carrinho via AJAX
+ */
+function addToCart(produtoId) {
+    fetch('api/carrinho_action.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({action: 'add', id: produtoId, qty: 1})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Produto adicionado ao carrinho!', 'success');
+            // Atualiza contador do carrinho no header se existir
+            const cartCount = document.querySelector('.cart-count');
+            if (cartCount) {
+                cartCount.textContent = parseInt(cartCount.textContent || '0') + 1;
+            }
+        } else {
+            showToast('Erro ao adicionar ao carrinho', 'error');
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        showToast('Erro de conexão', 'error');
+    });
+}
+
+/**
+ * Exibe toast notification
+ */
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `toast-notification toast-${type} show`;
+    toast.textContent = message;
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        color: white;
+        font-weight: 500;
+        z-index: 9999;
+        transition: all 0.3s ease;
+        ${type === 'success' ? 'background: #28a745;' : 'background: #dc3545;'}
+    `;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 500);
+    }, 3000);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const btnComprar = document.querySelector('.stripe-comprar');
     if (!btnComprar) return;
     
     btnComprar.addEventListener('click', async function() {
         const produtoId = this.dataset.produtoId;
-        
-        // Verifica se cliente está logado (opcional - pode redirecionar para login)
-        // Aqui fazemos a chamada direta e o backend verifica
         
         this.disabled = true;
         this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processando...';

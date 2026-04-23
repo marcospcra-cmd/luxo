@@ -75,9 +75,10 @@ if (isset($_SESSION['carrinho']) && is_array($_SESSION['carrinho'])) {
               <?= htmlspecialchars(mb_strimwidth($_SESSION['cliente_nome'] ?? 'Conta', 0, 18, '…')) ?>
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
-              <li><a class="dropdown-item" href="favoritos.php">Meus favoritos</a></li>
+              <li><a class="dropdown-item" href="cliente_perfil.php">👤 Meu Perfil</a></li>
+              <li><a class="dropdown-item" href="favoritos.php">♥ Meus favoritos</a></li>
               <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item" href="cliente_logout.php">Sair</a></li>
+              <li><a class="dropdown-item" href="cliente_logout.php">🚪 Sair</a></li>
             </ul>
           </div>
         <?php else: ?>
