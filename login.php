@@ -41,7 +41,7 @@ include __DIR__ . '/includes/header.php';
 <section class="container login-shell">
   <form class="login-card" method="post" novalidate>
     <h1 class="serif mb-1" style="color:var(--accent);">Acesso restrito</h1>
-    <p class="text-muted small mb-4">Painel administrativo Maison de Luxo</p>
+    <p class="text-muted small mb-4">Painel administrativo Solar Amazônia</p>
 
     <?php if ($erro): ?>
       <div class="alert alert-danger small"><?= htmlspecialchars($erro) ?></div>
