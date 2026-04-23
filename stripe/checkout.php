@@ -62,8 +62,26 @@ if (!class_exists('\\Stripe\\Stripe')) {
 
 try {
     // Cria registro de pedido pendente
-    $cliente_id = $_SESSION['cliente_id'];
+    $cliente_id = cliente_id();
+    
+    if (!$cliente_id) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Cliente não autenticado. Faça login para continuar.']);
+        exit;
+    }
+    
     $total = (float)$produto['preco'];
+    
+    // Verifica se a coluna cliente_id existe na tabela pedidos
+    try {
+        $check = $pdo->query("DESCRIBE pedidos");
+        $cols = $check->fetchAll(PDO::FETCH_COLUMN);
+        if (!in_array('cliente_id', $cols)) {
+            throw new Exception('Tabela pedidos não possui coluna cliente_id. Execute a migração do banco de dados.');
+        }
+    } catch (PDOException $e) {
+        throw new Exception('Tabela pedidos não existe. Execute a migração do banco de dados (update_schema.sql).');
+    }
     
     $insert = $pdo->prepare('INSERT INTO pedidos (cliente_id, produto_id, status, total) VALUES (:cliente_id, :produto_id, :status, :total)');
     $insert->execute([

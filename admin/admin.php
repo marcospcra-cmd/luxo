@@ -80,9 +80,10 @@ $tema = $TEMA_ATUAL;
     <a href="admin.php" class="admin-tab active">📦 Produtos</a>
     <a href="pedidos.php" class="admin-tab">🛒 Pedidos</a>
     <a href="produto_form.php" class="admin-tab">➕ Novo Produto</a>
-    <a href="#" class="admin-tab" onclick="alert('Funcionalidade em desenvolvimento: Gestão de Clientes')">👥 Clientes</a>
-    <a href="#" class="admin-tab" onclick="alert('Funcionalidade em desenvolvimento: Cupons de Desconto')">🏷️ Cupons</a>
-    <a href="#" class="admin-tab" onclick="alert('Funcionalidade em desenvolvimento: Relatórios')">📊 Relatórios</a>
+    <a href="categorias.php" class="admin-tab">📂 Categorias</a>
+    <a href="clientes.php" class="admin-tab">👥 Clientes</a>
+    <a href="cupons.php" class="admin-tab">🏷️ Cupons</a>
+    <a href="relatorios.php" class="admin-tab">📊 Relatórios</a>
   </div>
 
   <?php if ($msg): ?>
@@ -101,11 +102,12 @@ $tema = $TEMA_ATUAL;
 
   <div class="table-responsive">
     <table class="table admin-table align-middle">
-      <thead><tr><th>Foto</th><th>Nome</th><th>Categoria</th><th>Preço</th><th>Estoque</th><th>Vídeo</th><th class="text-end">Ações</th></tr></thead>
+      <thead><tr><th>Foto</th><th>Cód. Registro</th><th>Nome</th><th>Categoria</th><th>Preço</th><th>Estoque</th><th>Vídeo</th><th class="text-end">Ações</th></tr></thead>
       <tbody>
         <?php foreach ($produtos as $p): ?>
         <tr>
           <td><img class="admin-thumb" src="<?= htmlspecialchars('../'.$p['imagem_url']) ?>" onerror="this.src='../assets/placeholder.svg'" style="width:50px;height:50px;object-fit:cover;border-radius:var(--radius-sm);"></td>
+          <td><code><?= htmlspecialchars($p['codigo_registro'] ?? '—') ?></code></td>
           <td><?= htmlspecialchars($p['nome']) ?></td>
           <td><span class="product-cat"><?= htmlspecialchars($p['categoria']) ?></span></td>
           <td>R$ <?= number_format((float)$p['preco'],2,',','.') ?></td>
@@ -130,7 +132,7 @@ $tema = $TEMA_ATUAL;
         </tr>
         <?php endforeach; ?>
         <?php if (empty($produtos)): ?>
-          <tr><td colspan="7" class="text-center text-muted py-4">Nenhum produto cadastrado.</td></tr>
+          <tr><td colspan="8" class="text-center text-muted py-4">Nenhum produto cadastrado.</td></tr>
         <?php endif; ?>
       </tbody>
     </table>
